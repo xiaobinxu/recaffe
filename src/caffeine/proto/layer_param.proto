@@ -1,0 +1,7 @@
+package caffeine;
+
+message LayerParameter
+{
+  required string name = 1;
+}
+
