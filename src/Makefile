@@ -40,6 +40,7 @@ $(NAME): $(PROTO_GEN_CC) $(OBJS)
 
 $(TEST_NAME): $(TEST_OBJS) $(OBJS)
 	$(CXX) -o $(TEST_NAME) $(TEST_OBJS) $(LDFLAGS) $(WARNINGS) -l$(PROJECT) -pthread
+	./$(TEST_NAME)
 
 $(PROTO_GEN_CC): $(PROTO_SRCS)
 	protoc $(PROTO_SRCS) --cpp_out=.
