@@ -13,7 +13,7 @@ Caffeine::Caffeine()
 
 Caffeine::~Caffeine()
 {
-  if (!cublas_handle_)
+  if (cublas_handle_)
     CUBLAS_CHECK(cublasDestroy(cublas_handle_));
 }
 
