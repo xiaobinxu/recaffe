@@ -34,7 +34,7 @@ Caffe::Brew Caffe::mode()
   return Get().mode_;
 }
 
-Caffe::Brew Caffe::set_mode(Caffe::Brew mode)
+void Caffe::set_mode(Caffe::Brew mode)
 {
   Get().mode_ = mode;
 }

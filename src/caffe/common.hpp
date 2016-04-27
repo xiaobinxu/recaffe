@@ -32,7 +32,7 @@ class Caffe
     static cublasHandle_t cublas_handle();
     static Brew mode();
     // The setters for the variables
-    static Brew set_mode(Brew mode);
+    static void set_mode(Brew mode);
 
   private:
     Caffe();
@@ -45,5 +45,5 @@ class Caffe
 }  // namespace caffe
 
 
-#endif
+#endif  // CAFFE_COMMOM_HPP_
 

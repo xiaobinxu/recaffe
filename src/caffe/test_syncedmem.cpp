@@ -41,6 +41,14 @@ TEST_F(SyncedMemoryTest, TestCPUWrite)
   }
   const void* gpu_data = mem.gpu_data();
   EXPECT_EQ(mem.head(), SyncedMemory::SYNCED);
+  // check if values are the same
+  char* recovered_value = new char[10];
+  CUDA_CHECK(cudaMemcpy((void*)recovered_value, gpu_data, 10,
+        cudaMemcpyDeviceToHost));
+  for (int i = 0; i < mem.size(); ++i) {
+    EXPECT_EQ(recovered_value[i], 1);
+  }
+  delete[] recovered_value;
 }
 
 TEST_F(SyncedMemoryTest, TESTGPUWrite)

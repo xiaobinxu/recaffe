@@ -1,11 +1,9 @@
-#ifndef caffe_BLOB_HPP
-#define caffe_BLOB_HPP
-
-#include <memory>
-#include <cublas_v2.h>
+#ifndef CAFFE_BLOB_HPP
+#define CAFFE_BLOB_HPP
 
 #include "caffe/common.hpp"
 #include "caffe/syncedmem.hpp"
+#include "caffe/proto/layer_param.pb.h"
 
 namespace caffe {
 
@@ -36,7 +34,9 @@ class Blob
     Dtype* mutable_gpu_data();
     Dtype* mutable_cpu_diff();
     Dtype* mutable_gpu_diff();
-    void update();
+    void Update();
+    void FromProto(const BlobProto& proto);
+    void ToProto(BlobProto* proto);
 
   private:
     shared_ptr<SyncedMemory> data_;
@@ -49,88 +49,6 @@ class Blob
 };  // class Blob
 
 
-
-template <typename Dtype>
-void Blob<Dtype>::Reshape(int num, int channels, int height, int width)
-{
-  CHECK_GT(num, 0);
-  CHECK_GT(channels, 0);
-  CHECK_GT(height, 0);
-  CHECK_GT(width, 0);
-  num_ = num;
-  channels_ = channels;
-  height_ = height;
-  width_ = width;
-  count_ = num_ * channels_ * height_ * width_;
-  data_.reset(new SyncedMemory(count_ * sizeof(Dtype)));
-  diff_.reset(new SyncedMemory(count_ * sizeof(Dtype)));
-}
-
-template <typename Dtype>
-const Dtype* Blob<Dtype>::cpu_data()
-{
-  CHECK(data_);
-  return (const Dtype*)data_->cpu_data();
-}
-
-template <typename Dtype>
-const Dtype* Blob<Dtype>::gpu_data()
-{
-  CHECK(data_);
-  return (const Dtype*)data_->gpu_data();
-}
-
-template <typename Dtype>
-const Dtype* Blob<Dtype>::cpu_diff()
-{
-  CHECK(diff_);
-  return (const Dtype*)diff_->cpu_data();
-}
-
-template <typename Dtype>
-const Dtype* Blob<Dtype>::gpu_diff()
-{
-  CHECK(diff_);
-  return (const Dtype*)diff_->gpu_data();
-}
-
-template <typename Dtype>
-Dtype* Blob<Dtype>::mutable_cpu_data()
-{
-  CHECK(data_);
-  return (Dtype*)data_->mutable_cpu_data();
-}
-
-template <typename Dtype>
-Dtype* Blob<Dtype>::mutable_gpu_data()
-{
-  CHECK(data_);
-  return (Dtype*)data_->mutable_gpu_data();
-}
-
-template <typename Dtype>
-Dtype* Blob<Dtype>::mutable_cpu_diff()
-{
-  CHECK(diff_);
-  return (Dtype*)diff_->mutable_cpu_data();
-}
-
-template <typename Dtype>
-Dtype* Blob<Dtype>::mutable_gpu_diff()
-{
-  CHECK(diff_);
-  return (Dtype*)diff_->mutable_gpu_data();
-}
-
-template <typename Dtype>
-void Blob<Dtype>::update()
-{
-
-}
-
-template class Blob<float>;
-template class Blob<double>;
-
 }  // namespace caffe
 
-#endif  // caffe_BLOB_HPP
+#endif  // CAFFE_BLOB_HPP
