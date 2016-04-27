@@ -5,6 +5,7 @@
 #include <iostream>
 #include <boost/shared_ptr.hpp>
 #include <glog/logging.h>
+#include <mkl_vsl.h>
 
 #include <cublas_v2.h>
 #include <driver_types.h>
@@ -16,8 +17,9 @@ namespace caffe {
 using boost::shared_ptr;
 using std::size_t;
 
-#define CUDA_CHECK(condition) CHECK((condition) == cudaSuccess)
-#define CUBLAS_CHECK(condition) CHECK((condition) == CUBLAS_STATUS_SUCCESS)
+#define CUDA_CHECK(condition) CHECK_EQ((condition), cudaSuccess)
+#define CUBLAS_CHECK(condition) CHECK_EQ((condition), CUBLAS_STATUS_SUCCESS)
+#define VSL_CHECK(condition) CHECK_EQ((condition), VSL_STATUS_OK)
 
 // A singleton class to hold common caffe stuff, such as the handler that
 // caffe is going to use for cublas.
@@ -30,6 +32,7 @@ class Caffe
 
     // The getters for the variables
     static cublasHandle_t cublas_handle();
+    static VSLStreamStatePtr vsl_stream();
     static Brew mode();
     // The setters for the variables
     static void set_mode(Brew mode);
@@ -38,6 +41,7 @@ class Caffe
     Caffe();
     static shared_ptr<Caffe> singleton_;
     cublasHandle_t cublas_handle_;
+    VSLStreamStatePtr vsl_stream_;
     Brew mode_;
 };
 
