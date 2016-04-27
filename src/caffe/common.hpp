@@ -1,5 +1,5 @@
-#ifndef CAFFINE_COMMON_HPP_
-#define CAFFINE_COMMON_HPP_
+#ifndef CAFFE_COMMON_HPP_
+#define CAFFE_COMMON_HPP_
 
 #include <cstddef>
 #include <iostream>
@@ -9,7 +9,7 @@
 #include <cublas_v2.h>
 #include <driver_types.h>
 
-namespace caffeine {
+namespace caffe {
 
 // We will use the boost shared_ptr instead of the new C++11 one mainly
 // because cuda does not work (at least now) well with C++11 features.
@@ -19,13 +19,13 @@ using std::size_t;
 #define CUDA_CHECK(condition) CHECK((condition) == cudaSuccess)
 #define CUBLAS_CHECK(condition) CHECK((condition) == CUBLAS_STATUS_SUCCESS)
 
-// A singleton class to hold common caffeine stuff, such as the handler that
-// caffeine is going to use for cublas.
-class Caffeine
+// A singleton class to hold common caffe stuff, such as the handler that
+// caffe is going to use for cublas.
+class Caffe
 {
   public:
-    ~Caffeine();
-    static Caffeine& Get();
+    ~Caffe();
+    static Caffe& Get();
     enum Brew { CPU, GPU };
 
     // The getters for the variables
@@ -35,14 +35,14 @@ class Caffeine
     static Brew set_mode(Brew mode);
 
   private:
-    Caffeine();
-    static shared_ptr<Caffeine> singleton_;
+    Caffe();
+    static shared_ptr<Caffe> singleton_;
     cublasHandle_t cublas_handle_;
     Brew mode_;
 };
 
 
-}  // namespace caffeine
+}  // namespace caffe
 
 
 #endif

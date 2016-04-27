@@ -1,11 +1,11 @@
-PROJECT = caffeine
+PROJECT = caffe
 
 NAME = lib$(PROJECT).so
 TEST_NAME = test_$(PROJECT)
 
 CXX_SRCS = $(shell find . ! -name "test_*.cpp" ! -name "gtest*" -name "*.cpp")
 TEST_SRCS = $(shell find . -name "test_*.cpp") gtest/gtest-all.cpp
-PROTO_SRCS = $(wildcard caffeine/proto/*.proto)
+PROTO_SRCS = $(wildcard caffe/proto/*.proto)
 PROTO_GEN_HEADER = $(PROTO_SRCS:.proto=.pb.h)
 PROTO_GEN_CC = $(PROTO_SRCS:.proto=.pb.cc)
 CXX_OBJS = $(CXX_SRCS:.cpp=.o)

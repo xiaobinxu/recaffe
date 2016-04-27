@@ -2,10 +2,10 @@
 #include <cuda_runtime.h>
 
 #include "gtest/gtest.h"
-#include "caffeine/common.hpp"
-#include "caffeine/syncedmem.hpp"
+#include "caffe/common.hpp"
+#include "caffe/syncedmem.hpp"
 
-namespace caffeine
+namespace caffe
 {
 
 class SyncedMemoryTest : public ::testing::Test {};
@@ -57,6 +57,6 @@ TEST_F(SyncedMemoryTest, TESTGPUWrite)
   EXPECT_EQ(mem.head(), SyncedMemory::SYNCED);
 }
 
-}  // namespace caffeine
+}  // namespace caffe
 
 

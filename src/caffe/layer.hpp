@@ -1,14 +1,14 @@
-#ifndef CAFFEINE_BASE_HPP
-#define CAFFEINE_BASE_HPP
+#ifndef CAFFE_BASE_HPP
+#define CAFFE_BASE_HPP
 
 #include <vector>
-#include "caffeine/blob.hpp"
-#include "caffeine/common.hpp"
-#include "caffeine/proto/layer_param.pb.h"
+#include "caffe/blob.hpp"
+#include "caffe/common.hpp"
+#include "caffe/proto/layer_param.pb.h"
 
 using std::vector;
 
-namespace caffeine
+namespace caffe
 {
 
 template <typename Dtype>
@@ -70,6 +70,6 @@ class Layer
 };  // class Layer
 
 
-}  // namespace caffeine
+}  // namespace caffe
 
-#endif  // CAFFEINE_BASE_HPP
+#endif  // CAFFE_BASE_HPP

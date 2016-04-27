@@ -1,9 +1,9 @@
-#ifndef CAFFEINE_SYNCEDMEM_HPP
-#define CAFFEINE_SYNCEDMEM_HPP
+#ifndef CAFFE_SYNCEDMEM_HPP
+#define CAFFE_SYNCEDMEM_HPP
 
-#include "caffeine/common.hpp"
+#include "caffe/common.hpp"
 
-namespace caffeine {
+namespace caffe {
 
     class SyncedMemory {
         public:
@@ -27,6 +27,6 @@ namespace caffeine {
             size_t size_;
             SyncedHead head_;
     };  // class SyncedMemory
-}  // namespace caffeine
+}  // namespace caffe
 
-#endif  // CAFFEINE_SYNCEDMEM_HPP
+#endif  // CAFFE_SYNCEDMEM_HPP

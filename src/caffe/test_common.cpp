@@ -2,9 +2,9 @@
 #include <cuda_runtime.h>
 
 #include "gtest/gtest.h"
-#include "caffeine/common.hpp"
+#include "caffe/common.hpp"
 
-namespace caffeine {
+namespace caffe {
 
 class CommonTest : public ::testing::Test {};
 
@@ -12,13 +12,13 @@ TEST_F(CommonTest, TestCublasHandler) {
   int cuda_device_id;
   CUDA_CHECK(cudaGetDevice(&cuda_device_id));
   LOG(INFO) << "Cuda device id: " << cuda_device_id;
-  EXPECT_TRUE(Caffeine::cublas_handle());
+  EXPECT_TRUE(Caffe::cublas_handle());
 }
 
 TEST_F(CommonTest, TestBrewMode) {
-  EXPECT_EQ(Caffeine::mode(), Caffeine::CPU);
-  Caffeine::set_mode(Caffeine::GPU);
-  EXPECT_EQ(Caffeine::mode(), Caffeine::GPU);
+  EXPECT_EQ(Caffe::mode(), Caffe::CPU);
+  Caffe::set_mode(Caffe::GPU);
+  EXPECT_EQ(Caffe::mode(), Caffe::GPU);
 }
 
 }

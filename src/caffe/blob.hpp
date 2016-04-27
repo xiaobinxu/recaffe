@@ -1,13 +1,13 @@
-#ifndef caffeine_BLOB_HPP
-#define caffeine_BLOB_HPP
+#ifndef caffe_BLOB_HPP
+#define caffe_BLOB_HPP
 
 #include <memory>
 #include <cublas_v2.h>
 
-#include "caffeine/common.hpp"
-#include "caffeine/syncedmem.hpp"
+#include "caffe/common.hpp"
+#include "caffe/syncedmem.hpp"
 
-namespace caffeine {
+namespace caffe {
 
 template <typename Dtype>
 class Blob
@@ -131,6 +131,6 @@ void Blob<Dtype>::update()
 template class Blob<float>;
 template class Blob<double>;
 
-}  // namespace caffeine
+}  // namespace caffe
 
-#endif  // caffeine_BLOB_HPP
+#endif  // caffe_BLOB_HPP

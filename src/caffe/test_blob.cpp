@@ -2,10 +2,10 @@
 #include <cuda_runtime.h>
 
 #include "gtest/gtest.h"
-#include "caffeine/common.hpp"
-#include "caffeine/blob.hpp"
+#include "caffe/common.hpp"
+#include "caffe/blob.hpp"
 
-namespace caffeine
+namespace caffe
 {
 
 template <typename Dtype>
@@ -63,4 +63,4 @@ TYPED_TEST(BlobSimpleTest, TestReshape)
 
 
 
-}  // namespace caffeine
+}  // namespace caffe
