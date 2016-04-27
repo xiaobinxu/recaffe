@@ -15,12 +15,15 @@ template <typename Dtype>
 class Layer
 {
   public:
+    // You should not implement your own constructor. Any set up code should go
+    // to SetUp(), where the dimensions of the bottom blobs are provided to the
+    // layer.
     explicit Layer(const LayerParameter& param)
       : layer_param_(param) {}
     virtual ~Layer();
 
     // SetUp: your function should implement this.
-    virtual void SetUp(vector<const Blob<Dtype>*>& bottom, 
+    virtual void SetUp(const vector<Blob<Dtype>*>& bottom, 
         vector<Blob<Dtype>*>* top) = 0;
 
     // Forward, backward and predict wrappers. You should implement the cpu and
@@ -38,7 +41,7 @@ class Layer
     // The protobuf that stores the layer parameters
     LayerParameter layer_param_;
     // The vector that stores the parameters and a set of blobs
-    vector<Blob<Dtype> > blobs;
+    vector<Blob<Dtype> > blobs_;
 
     // Forward functions
     virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom, 
