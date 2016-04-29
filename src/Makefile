@@ -33,11 +33,14 @@ LDFLAGS += $(foreach library,$(LIBRARIES),-l$(library))
 
 LINK = $(CXX) $(CXXFLAGS) $(CPPFLAGS) $(WARNINGS)
 
-.PHONY: all test clean distclean
+.PHONY: all test clean distclean linecount
 
 all: $(NAME)
 
 test: $(TEST_NAME)
+
+linecount: clean
+	cloc --read-lang-def=caffe.cloc caffe/
 
 $(NAME): $(PROTO_GEN_CC) $(OBJS)
 	$(LINK) -shared $(OBJS) $(LDFLAGS) -o $(NAME)
