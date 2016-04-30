@@ -1,7 +1,7 @@
 PROJECT := caffe
 
 NAME := lib$(PROJECT).so
-TEST_NAME := test_$(PROJECT)
+TEST_NAME := test_$(PROJECT).bin
 
 CXX_SRCS := $(shell find caffe ! -name "test_*.cpp" -name "*.cpp")
 CU_SRCS := $(shell find caffe -name "*.cu")
