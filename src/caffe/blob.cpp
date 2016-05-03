@@ -21,28 +21,28 @@ void Blob<Dtype>::Reshape(int num, int channels, int height, int width)
 }
 
 template <typename Dtype>
-const Dtype* Blob<Dtype>::cpu_data()
+const Dtype* Blob<Dtype>::cpu_data() const
 {
   CHECK(data_);
   return (const Dtype*)data_->cpu_data();
 }
 
 template <typename Dtype>
-const Dtype* Blob<Dtype>::gpu_data()
+const Dtype* Blob<Dtype>::gpu_data() const
 {
   CHECK(data_);
   return (const Dtype*)data_->gpu_data();
 }
 
 template <typename Dtype>
-const Dtype* Blob<Dtype>::cpu_diff()
+const Dtype* Blob<Dtype>::cpu_diff() const
 {
   CHECK(diff_);
   return (const Dtype*)diff_->cpu_data();
 }
 
 template <typename Dtype>
-const Dtype* Blob<Dtype>::gpu_diff()
+const Dtype* Blob<Dtype>::gpu_diff() const
 {
   CHECK(diff_);
   return (const Dtype*)diff_->gpu_data();
@@ -79,7 +79,43 @@ Dtype* Blob<Dtype>::mutable_gpu_diff()
 template <typename Dtype>
 void Blob<Dtype>::Update()
 {
+  //TODO
   LOG(FATAL) << "not implemented";
+}
+
+template <typename Dtype>
+void Blob<Dtype>::CopyFrom(const Blob& source, bool copy_diff, bool reshape)
+{
+  if (num_ != source.num() || channels_ != source.channels() ||
+      height_ != source.height() || width_ != source.width())
+  {
+    if (reshape)
+      Reshape(source.num(), source.channels(), source.height(), source.width());
+    else
+      LOG(FATAL) << "Trying to copy blobs of different sizes.";
+  }
+  switch (Caffe::mode()) {
+    case Caffe::GPU:
+      if (copy_diff) {
+        CUDA_CHECK(cudaMemcpy(diff_->mutable_gpu_data(), source.gpu_diff(),
+              sizeof(Dtype) * count_, cudaMemcpyDeviceToDevice));
+      } else {
+        CUDA_CHECK(cudaMemcpy(data_->mutable_gpu_data(), source.gpu_data(),
+              sizeof(Dtype) * count_, cudaMemcpyDeviceToDevice));
+      }
+      break;
+    case Caffe::CPU:
+      if (copy_diff) {
+        memcpy(diff_->mutable_cpu_data(), source.cpu_diff(),
+            sizeof(Dtype) * count_);
+      } else {
+        memcpy(data_->mutable_cpu_data(), source.cpu_data(),
+            sizeof(Dtype) * count_);
+      }
+      break;
+    default:
+      LOG(FATAL) << "Unknown caffe mode.";
+  }
 }
 
 template <typename Dtype>
@@ -91,14 +127,16 @@ void Blob<Dtype>::FromProto(const BlobProto& proto)
   for (int i = 0; i < count_; ++i) {
     data_vec[i] = proto.data(i);
   }
-  Dtype* diff_vec = mutable_cpu_diff();
-  for (int i = 0; i < count_; ++i) {
-    diff_vec[i] = proto.diff(i);
-  }  
+  if (proto.diff_size() > 0) {
+    Dtype* diff_vec = mutable_cpu_diff();
+    for (int i = 0; i < count_; ++i) {
+      diff_vec[i] = proto.diff(i);
+    }  
+  }
 }
 
 template <typename Dtype>
-void Blob<Dtype>::ToProto(BlobProto* proto)
+void Blob<Dtype>::ToProto(BlobProto* proto, bool write_diff) const
 {
   proto->set_num(num_);
   proto->set_channels(channels_);
@@ -110,13 +148,14 @@ void Blob<Dtype>::ToProto(BlobProto* proto)
   for (int i = 0; i < count_; ++i) {
     proto->add_data(data_vec[i]);
   }
-  const Dtype* diff_vec = cpu_diff();
-  for (int i = 0; i < count_; ++i) {
-    proto->add_diff(diff_vec[i]);
+  if (write_diff) {
+    const Dtype* diff_vec = cpu_diff();
+    for (int i = 0; i < count_; ++i) {
+      proto->add_diff(diff_vec[i]);
+    }
   }
 }
 
-template class Blob<float>;
-template class Blob<double>;
+INSTANTIATE_CLASS(Blob);
 
 }  // namespace caffe

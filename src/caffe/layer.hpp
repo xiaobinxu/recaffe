@@ -4,7 +4,7 @@
 #include <vector>
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
-#include "caffe/proto/layer_param.pb.h"
+#include "caffe/proto/caffe.pb.h"
 
 using std::vector;
 
@@ -19,7 +19,16 @@ class Layer
     // to SetUp(), where the dimensions of the bottom blobs are provided to the
     // layer.
     explicit Layer(const LayerParameter& param)
-      : layer_param_(param) {}
+      : layer_param_(param) {
+        // the only thing we do is to copy blobs if ther are any.
+        if (layer_param_.blobs_size() > 0) {
+          blobs_.resize(layer_param_.blobs_size());
+          for (int i = 0; i < layer_param_.blobs_size(); ++i) {
+            blobs_[i].reset(new Blob<Dtype>());
+            blobs_[i]->FromProto(layer_param_.blobs(i));
+          }
+        }
+    }
     virtual ~Layer();
 
     // SetUp: your function should implement this.
@@ -34,14 +43,16 @@ class Layer
     Dtype Backward(const vector<Blob<Dtype>*>& top,
         bool propagate_down,
         vector<Blob<Dtype>*>* bottom);
-    void Predict(const vector<Blob<Dtype>*>& bottom, 
-        vector<Blob<Dtype>*>* top);
+
+    vector<shared_ptr<Blob<Dtype> > >& blobs() { return blobs_; }
+    const LayerParameter& layer_param() { return layer_param_; }
+    virtual void ToProto(LayerParameter* param, bool write_diff = false);
   
   protected:
     // The protobuf that stores the layer parameters
     LayerParameter layer_param_;
     // The vector that stores the parameters and a set of blobs
-    vector<Blob<Dtype> > blobs_;
+    vector<shared_ptr<Blob<Dtype> > > blobs_;
 
     // Forward functions
     virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom, 
@@ -52,7 +63,9 @@ class Layer
       Forward_cpu(bottom, top);
     }
 
-    // Backward functions
+    // Backward functions: the backward function will compute the gradients for
+    // any parameters and also for the bottom blobs if propagate_down is true.
+    // It will return the loss produced from this layer.
     virtual Dtype Backward_cpu(const vector<Blob<Dtype>*>& top,
         bool propagate_down,
         vector<Blob<Dtype>*>* bottom) = 0;
@@ -63,17 +76,47 @@ class Layer
       return Backward_cpu(top, propagate_down, bottom);
     }
 
-    // Prediction functions: could be overridden, but the default behavior is to
-    // simply call the forward functions.
-    virtual void Predict_cpu(const vector<Blob<Dtype>*>& bottom, 
-        vector<Blob<Dtype>*>* top) { Forward_cpu(bottom, top); }
-    // For prediction, if there is no Predict_gpu, then there are two options:
-    // to use predict_cpu as a backup, or to use forward_gpu (e.g. maybe the
-    // author forgot to write what backup s/he wants?). Thus, we will require
-    // the author to explicitly specify which fallback s/he wants.
-    virtual void Predict_gpu(const vector<Blob<Dtype>*>& bottom, 
-        vector<Blob<Dtype>*>* top) = 0;
+    DISABLE_COPY_AND_ASSIGN(Layer);
 };  // class Layer
+
+
+template <typename Dtype>
+void Layer<Dtype>::Forward(const vector<Blob<Dtype>*>& bottom,
+    vector<Blob<Dtype>*>* top) {
+  switch (Caffe::mode()) {
+    case Caffe::CPU:
+      Forward_cpu(bottom, top);
+      break;
+    case Caffe::GPU:
+      Forward_gpu(bottom, top);
+      break;
+    default:
+      LOG(FATAL) << "Unknown caffe mode.";
+  }
+}
+
+template <typename Dtype>
+Dtype Layer<Dtype>::Backward(const vector<Blob<Dtype>*>& top,
+    bool propagate_down,
+    vector<Blob<Dtype>*>* bottom) {
+  switch (Caffe::mode()) {
+    case Caffe::CPU:
+      return Backward_cpu(top, propagate_down, bottom);
+    case Caffe::GPU:
+      return Backward_gpu(top, propagate_down, bottom);
+    default:
+      LOG(FATAL) << "Unknown caffe mode.";
+  }
+}
+
+template <typename Dtype>
+void Layer<Dtype>::ToProto(LayerParameter* param, bool write_diff) {
+  param->Clear();
+  param->CopyFrom(layer_param_);
+  param->clear_blobs();
+  for (int i = 0; i < blobs_.size(); ++i)
+    blobs_[i]->ToProto(param->add_blobs(), write_diff);
+}
 
 
 }  // namespace caffe

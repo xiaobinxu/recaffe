@@ -1,3 +1,7 @@
+// Fillers are random number generators that fills a blob using the specified
+// algorithm. The expectation is that they are only going to be used during
+// initialization time and will not involve any GPUs.
+
 #ifndef CAFFE_FILLER_HPP
 #define CAFFE_FILLER_HPP
 
@@ -6,14 +10,15 @@
 #include "caffe/common.hpp"
 #include "caffe/blob.hpp"
 #include "caffe/syncedmem.hpp"
-#include "caffe/proto/layer_param.pb.h"
+#include "caffe/proto/caffe.pb.h"
+#include "caffe/util/math_functions.hpp"
 
 namespace caffe {
 
 template <typename Dtype>
 class Filler {
   public:
-    Filler(const FillerParameter& param) : filler_param_(param) {}
+    explicit Filler(const FillerParameter& param) : filler_param_(param) {}
     virtual ~Filler() {}
     virtual void Fill(Blob<Dtype>* blob) = 0;
   protected:
@@ -23,7 +28,7 @@ class Filler {
 template <typename Dtype>
 class ConstantFiller : public Filler<Dtype> {
   public:
-    ConstantFiller(const FillerParameter& param) : Filler<Dtype>(param) {}
+    explicit ConstantFiller(const FillerParameter& param) : Filler<Dtype>(param) {}
     virtual void Fill(Blob<Dtype>* blob)
     {
       Dtype* data = blob->mutable_cpu_data();
@@ -39,55 +44,93 @@ class ConstantFiller : public Filler<Dtype> {
 template <typename Dtype>
 class UniformFiller : public Filler<Dtype> {
   public:
-    UniformFiller(const FillerParameter& param) : Filler<Dtype>(param) {}
+    explicit UniformFiller(const FillerParameter& param) : Filler<Dtype>(param) {}
     virtual void Fill(Blob<Dtype>* blob)
     {
-      void* data = (void*)(blob->mutable_cpu_data());
-      const int count = blob->count();
-      CHECK(count);
-      switch (sizeof(Dtype)) {
-        case sizeof(float):
-          VSL_CHECK(vsRngUniform(VSL_RNG_METHOD_UNIFORM_STD,
-                Caffe::vsl_stream(), count, (float*)data,
-                this->filler_param_.min(), this->filler_param_.max()));
-          break;
-        case sizeof(double):
-          VSL_CHECK(vdRngUniform(VSL_RNG_METHOD_UNIFORM_STD,
-                Caffe::vsl_stream(), count, (double*)data,
-                this->filler_param_.min(), this->filler_param_.max()));
-          break;
-        default:
-          CHECK(false) << "Unknown dtype.";
-      }
+      CHECK(blob->count());
+      caffe_vRngUniform<Dtype>(blob->count(), blob->mutable_cpu_data(),
+          this->filler_param_.min(), this->filler_param_.max());
     }
 };  // class UniformFiller
 
 template <typename Dtype>
 class GaussianFiller : public Filler<Dtype> {
   public:
-    GaussianFiller(const FillerParameter& param) : Filler<Dtype>(param) {}
+    explicit GaussianFiller(const FillerParameter& param) : Filler<Dtype>(param) {}
     virtual void Fill(Blob<Dtype>* blob)
     {
-      void* data = (void*)(blob->mutable_cpu_data());
-      const int count = blob->count();
-      CHECK(count);
-      switch (sizeof(Dtype)) {
-        case sizeof(float):
-          VSL_CHECK(vsRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
-                Caffe::vsl_stream(), count, (float*)data,
-                this->filler_param_.mean(), this->filler_param_.std()));
-          break;
-        case sizeof(double):
-          VSL_CHECK(vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_BOXMULLER,
-                Caffe::vsl_stream(), count, (double*)data,
-                this->filler_param_.mean(), this->filler_param_.std()));
-          break;
-        default:
-          CHECK(false) << "Unknown dtype.";
-      }
+      CHECK(blob->count());
+      caffe_vRngGaussian<Dtype>(blob->count(), blob->mutable_cpu_data(),
+          this->filler_param_.mean(), this->filler_param_.std());
     }
 };  // class GaussianFiller
 
+template <typename Dtype>
+class PositiveUnitballFiller : public Filler<Dtype> {
+  public:
+    explicit PositiveUnitballFiller(const FillerParameter& param)
+      : Filler<Dtype>(param) {}
+    virtual void Fill(Blob<Dtype>* blob)
+    {
+      Dtype* data = blob->mutable_cpu_data();
+      CHECK(blob->count());
+      caffe_vRngUniform<Dtype>(blob->count(), blob->mutable_cpu_data(), 0, 1);
+      // we expect the filler to not be called very frequently, so we will
+      // just use a simple implementation
+      int dim = blob->count() / blob->num();
+      CHECK(dim);
+      for (int i = 0; i < blob->num(); ++i) {
+        Dtype sum = 0;
+        for (int j = 0; j < dim; ++j)
+          sum += data[i * dim + j];
+        for (int j = 0; j < dim; ++j)
+          data[i * dim + j] /= sum;
+      }
+    }
+};  // class PositiveUnitballFiller
+
+// A filler based on the paper [Bengio and Glorot 2010]: Understanding
+// the difficulty of training deep feedforward neuralnetworks, but does not
+// use the fan_out value.
+//
+// It fills the incoming matrix by randomly sampling uniform data from
+// [-scale, scale] where scale = sqrt(3 / fan_in) where fan_in is the number
+// of input nodes. You should make sure the input blob has shape (num, a, b, c)
+// where a * b * c = fan_in.
+template <typename Dtype>
+class XavierFiller : public Filler<Dtype> {
+  public:
+    explicit XavierFiller(const FillerParameter& param) : Filler<Dtype>(param) {}
+    virtual void Fill(Blob<Dtype>* blob)
+    {
+      CHECK(blob->count());
+      int fan_in = blob->count() / blob->num();
+      Dtype scale = sqrt(Dtype(3) / fan_in);
+      caffe_vRngUniform<Dtype>(blob->count(), blob->mutable_cpu_data(),
+          -scale, scale);
+    }
+};  // class XavierFiller
+
+// A function to get a specific filler from the specification given in
+// FillerParameter. Ideally this would be replaced by a factory pattern,
+// but we will leave it this way for now.
+template <typename Dtype>
+Filler<Dtype>* GetFiller(const FillerParameter& param) {
+  const std::string& type = param.type();
+  if (type == "constant")
+    return new ConstantFiller<Dtype>(param);
+  else if (type == "gaussian")
+    return new GaussianFiller<Dtype>(param);
+  else if (type == "positive_unitball")
+    return new PositiveUnitballFiller<Dtype>(param);
+  else if (type == "uniform")
+    return new UniformFiller<Dtype>(param);
+  else if (type == "xavier")
+    return new XavierFiller<Dtype>(param);
+  else
+    CHECK(false) << "Unknown filler name: " << param.type();
+  return (Filler<Dtype>*)NULL;
+}
 
 }  // namespace caffe
 
