@@ -39,7 +39,7 @@ MKL_LIB_DIR := $(MKL_DIR)/lib/intel64
 INCLUDE_DIRS := . /usr/local/include $(CUDA_INCLUDE_DIR) $(MKL_INCLUDE_DIR)
 LIBRARY_DIRS := . /usr/local/lib $(CUDA_LIB_DIR) $(MKL_LIB_DIR)
 LIBRARIES := cudart cublas protobuf glog mkl_rt mkl_intel_thread curand \
-	           leveldb snappy opencv_core opencv_highgui pthread tcmalloc
+	           leveldb snappy opencv_core opencv_highgui opencv_imgcodecs pthread tcmalloc
 
 WARNINGS += -Wall
 CXXFLAGS += -fPIC

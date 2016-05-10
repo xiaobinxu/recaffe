@@ -91,7 +91,7 @@ message SolverParameter {
   optional float gamma = 8; // the parameter to compute the learning rate
   optional float power = 9; // the parameter to compute the learning rate
   optional float momentum = 10; // the momentum value
-  optional float wieght_decay = 11; // the weight decay
+  optional float weight_decay = 11; // the weight decay
 
   optional string snapshot_prefix = 12; // the prefix for the snapshot
 }
